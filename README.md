@@ -9,6 +9,25 @@ Summary
 - Input: A local copy of the KakaoTalk contents (or cached) folder.
 - Output: Files copied into a result directory organized by modification date, with inferred extensions.
 
+Python version and platform notes
+- Minimum Python: 3.6
+- Recommended Python: 3.8+ (use a modern Python 3.x release to stay up-to-date and avoid end-of-life versions)
+
+Package/platform specifics:
+- On Linux, install and use `python-magic` and make sure the system `libmagic` library is available (the library is usually provided by the `file` package or distro packages like `libmagic1`/`libmagic-dev`). Example on Debian/Ubuntu:
+
+  sudo apt-get update
+  sudo apt-get install file libmagic-dev
+
+  Then install Python deps:
+  pip3 install -r requirements.txt
+
+- On Windows and macOS, using `python-magic-bin` can be easier because it ships prebuilt binaries for libmagic. Example (Windows):
+
+  pip install python-magic-bin tqdm
+
+- If you prefer cross-platform pure-Python installs, ensure your environment and OS have matching libmagic support before installing `python-magic`.
+
 Installation and usage
 
 1) Extract the folder to your PC
