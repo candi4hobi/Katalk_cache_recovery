@@ -1,0 +1,4 @@
+# Python requirements
+python-magic
+mimetypes
+tqdm
