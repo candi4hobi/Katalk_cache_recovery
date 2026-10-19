@@ -1,60 +1,34 @@
-# Katalk_cache_recovery
+# KakaoTalk cache recovery
+Recover file types from a copied KakaoTalk Android cache, then find a cached
+original image from a screenshot of an expired preview.
 
-This repository provides a small recovery tool and documentation based on a blog post about recovering KakaoTalk files whose download period has expired on the server. The tool scans temporary files left by the KakaoTalk app on a device, detects file types from signatures (magic bytes), assigns extensions, and copies files into a date-organized output directory.
+## 1. Copy the cache from the phone
+```powershell
+adb version
+adb devices # Unlock the phone and approve USB debugging if prompted.
+adb pull /sdcard/Android/data/com.kakao.talk/contents "<CACHE_COPY_DIR>"
+```
+ADB creates `<CACHE_COPY_DIR>/contents`. The commands do not modify or delete
+files on the phone.
 
-Warning: This tool works on files that are accessible from your own device (for example, a copied Android/data/com.kakao.talk/contents folder). On Android 11+ access to Android/data may be restricted; you may need to extract the folder using ADB, a file manager export, or a device backup tool. Do not recover or redistribute files that you do not have the right to access.
+## 2. Recover recognizable files
+```powershell
+conda create -n katalk python=3.8 -y
+conda activate katalk
+python -m pip install python-magic-bin tqdm pillow numpy
+python recover.py --src "<CACHE_COPY_DIR>/contents" --out "<RECOVERED_OUTPUT_DIR>"
+```
+Recovered copies with inferred extensions are written to the output directory
+you chose, organized into date folders.
 
-Summary
-- Principle: Scan the app's temporary files and determine file types using file signatures (MIME). Attach extensions and copy files into a structured output.
-- Input: A local copy of the KakaoTalk contents (or cached) folder.
-- Output: Files copied into a result directory organized by modification date, with inferred extensions.
+## 3. Find an image from an expired preview
+Crop the screenshot around the wanted image, then run:
+```powershell
+python find_kakao_preview.py "<REFERENCE_IMAGE_PATH>" "<RECOVERED_OUTPUT_DIR>" --out "<MATCH_RESULTS_DIR>" --top 80
+```
+Results:
+- `<MATCH_RESULTS_DIR>/matches.csv`: candidate paths in similarity order.
+- `<MATCH_RESULTS_DIR>/contact_sheet.jpg`: visual sheet of the top candidates.
 
-Python version and platform notes
-- Minimum Python: 3.6
-- Recommended Python: 3.8+ (use a modern Python 3.x release to stay up-to-date and avoid end-of-life versions)
-
-Package/platform specifics:
-- On Linux, install and use `python-magic` and make sure the system `libmagic` library is available (the library is usually provided by the `file` package or distro packages like `libmagic1`/`libmagic-dev`). Example on Debian/Ubuntu:
-
-  sudo apt-get update
-  sudo apt-get install file libmagic-dev
-
-  Then install Python deps:
-  pip3 install -r requirements.txt
-
-- On Windows and macOS, using `python-magic-bin` can be easier because it ships prebuilt binaries for libmagic. Example (Windows):
-
-  pip install python-magic-bin tqdm
-
-- If you prefer cross-platform pure-Python installs, ensure your environment and OS have matching libmagic support before installing `python-magic`.
-
-Installation and usage
-
-1) Extract the folder to your PC
-- Copy the contents folder from your Android device to your PC using a file manager, USB, or ADB.
-  Example (may require proper permissions):
-
-  adb pull /sdcard/Android/data/com.kakao.talk/contents ./kakao_contents
-
-  Note: Access to /Android/data is restricted on Android 11 and later. Use a file manager export, manufacturer backup tool, or obtain proper permissions if needed.
-
-2) Install Python dependencies
-
-- Linux/macOS
-  pip3 install -r requirements.txt
-
-- Windows
-  pip install python-magic-bin tqdm
-
-3) Run the recovery script
-
-  python3 recover.py -s ./kakao_contents -o ./result
-
-Results will be saved in ./result/YYYY.MM.DD/filename.extension
-
-Further reading
-- Original blog post: https://bperhaps.tistory.com/entry/%EC%B9%B4%EC%B9%B4%EC%98%A4%ED%86%A1-%EC%A0%80%EC%9E%A5-%EA%B8%B0%EA%B0%84-%EB%A7%8C%EB%A3%8C-%ED%8C%8C%EC%9D%BC-%EB%B3%B5%EA%B5%AC
-- Reference repository: https://github.com/bperhaps/Recovering-KakaoTalk-Expired-Files
-
-License
-- MIT License
+The finder can compare previews that are darker than the original or contain
+overlaid icons and text.
